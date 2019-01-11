@@ -1,6 +1,10 @@
+import 'package:auto_size_text/auto_size_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import 'flip_card.dart';
 
 void main() => runApp(MyApp());
 
@@ -49,7 +53,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   bool _toggle;
   TextEditingController answerController = new TextEditingController();
-  var listAnswer = [
+  var _listAnswer = [
     "one thing after another",
     "broken heart",
     "but on second thought",
@@ -68,7 +72,11 @@ class _MyHomePageState extends State<MyHomePage> {
   ];
   int _counter = 1;
 
-  double _getScreenHeight() {
+  double _screenWidth(BuildContext context) {
+    return MediaQuery.of(context).size.width;
+  }
+
+  double _screenHeight(BuildContext context) {
     return MediaQuery.of(context).size.height;
   }
 
@@ -94,7 +102,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _checkAnswer() {
     String guess = answerController.text.toLowerCase();
-    String answer = listAnswer[_counter - 1];
+    String answer = _listAnswer[_counter - 1];
     if (guess == answer) {
       showDialog(
           barrierDismissible: false,
@@ -141,72 +149,86 @@ class _MyHomePageState extends State<MyHomePage> {
     // The Flutter framework has been optimized to make rerunning build methods
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
-    return GestureDetector(
-      onTap: () => print('tapped!'),
-      onTapDown: (TapDownDetails details) => _onTapDown(details),
-      onTapUp: (TapUpDetails details) => _onTapUp(details),
-      child: Scaffold(
+    return Scaffold(
 //      appBar: AppBar(
 //        // Here we take the value from the MyHomePage object that was created by
 //        // the App.build method, and use it to set our appbar title.
 //        title: Text(widget.title),
 //      ),
-        body: new Dismissible(
-//          direction: _counter <= 1
-//              ? DismissDirection.startToEnd
-//              : _counter == listAnswer.length
-//                  ? DismissDirection.endToStart
-//                  : DismissDirection.horizontal,
-          resizeDuration: null,
-          onDismissed: (DismissDirection direction) {
-            setState(() {
-              _counter += direction == DismissDirection.endToStart ? 1 : -1;
-              debugPrint('_counter: $_counter');
-            });
-          },
-          key: new ValueKey(_counter),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Image.asset('graphics/puzzle_$_counter.jpg'),
-              ],
+      body: new Dismissible(
+        resizeDuration: null,
+        onDismissed: (DismissDirection direction) {
+          setState(() {
+            debugPrint('direction: $direction');
+            _counter += direction == DismissDirection.endToStart ? 1 : -1;
+            debugPrint('_counter: $_counter');
+            Fluttertoast.showToast(
+                msg: "$_counter",
+                toastLength: Toast.LENGTH_SHORT,
+                gravity: ToastGravity.BOTTOM,
+                timeInSecForIos: 1,
+                backgroundColor: Colors.black.withOpacity(0.85),
+                textColor: Colors.white);
+          });
+        },
+        key: new ValueKey(_counter),
+        child: FlipCard(
+          direction: FlipDirection.HORIZONTAL, // default
+          front: Container(
+            color: Colors.transparent,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Image.asset('graphics/puzzle_$_counter.jpg'),
+                ],
+              ),
+            ),
+          ),
+          back: Center(
+            child: Container(
+              color: Colors.black87,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minWidth: _screenWidth(context),
+                  maxWidth: _screenWidth(context),
+                  minHeight: 300.0,
+                  maxHeight: 300.0,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    AutoSizeText(
+                      _listAnswer[_counter - 1],
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 30.0,
+                          fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
-        floatingActionButton: new Row(
-          children: <Widget>[
-            new Padding(
-              padding: new EdgeInsets.symmetric(
-                horizontal: 15.0,
-              ),
+      ),
+      floatingActionButton: new Row(
+        children: <Widget>[
+          new Padding(
+            padding: new EdgeInsets.symmetric(
+              horizontal: 15.0,
             ),
-            new FloatingActionButton(
-              onPressed: () {
-                _toggleOrientation();
-              },
-              child: new Icon(_toggleIcon()),
-            ),
-          ],
-        ),
+          ),
+          new FloatingActionButton(
+            onPressed: () {
+              _toggleOrientation();
+            },
+            child: new Icon(_toggleIcon()),
+          ),
+        ],
       ),
     );
-  }
-
-  _onTapDown(TapDownDetails details) {
-    var x = details.globalPosition.dx;
-    var y = details.globalPosition.dy;
-    debugPrint("tap down " + x.toString() + ", " + y.toString());
-  }
-
-  _onTapUp(TapUpDetails details) {
-    var x = details.globalPosition.dx;
-    var y = details.globalPosition.dy;
-    debugPrint("tap up " + x.toString() + ", " + y.toString());
-    double height = _getScreenHeight();
-    if (y <= (0.25 * height)) {
-      debugPrint("Top was tapped!");
-    }
   }
 
   IconData _toggleIcon() {
