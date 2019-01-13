@@ -50,9 +50,10 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final _controller = new PageController();
   Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   bool _toggle;
-  TextEditingController answerController = new TextEditingController();
+  TextEditingController _answerController = new TextEditingController();
   var _listAnswer = [
     "one thing after another",
     "broken heart",
@@ -70,7 +71,6 @@ class _MyHomePageState extends State<MyHomePage> {
     "a thin line between love and hate",
     "all things great and small"
   ];
-  int _counter = 1;
 
   double _screenWidth(BuildContext context) {
     return MediaQuery.of(context).size.width;
@@ -100,45 +100,58 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _checkAnswer() {
-    String guess = answerController.text.toLowerCase();
-    String answer = _listAnswer[_counter - 1];
-    if (guess == answer) {
-      showDialog(
-          barrierDismissible: false,
-          context: context,
-          child: new AlertDialog(
-            title: new Text("Correct!"),
-            content: new Text("Your answer is correct"),
-            actions: <Widget>[
-              FlatButton(
-                  child: Text('Ok'),
-                  onPressed: () {
-                    answerController.clear();
-                    _incrementCounter();
-                    Navigator.of(context).pop();
-                  })
-            ],
-          ));
-    } else {
-      showDialog(
-          context: context,
-          child: new AlertDialog(
-            title: new Text("Wrong!"),
-            content: new Text("Your answer is wrong"),
-          ));
-    }
+  void _showCardNumber(int cardNum) {
+    Fluttertoast.showToast(
+        msg: "$cardNum",
+        toastLength: Toast.LENGTH_SHORT,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIos: 1,
+        backgroundColor: Colors.black.withOpacity(0.85),
+        textColor: Colors.white);
   }
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  // Creates flip card page
+  Widget _createPage(int counter) {
+    return new FlipCard(
+      direction: FlipDirection.HORIZONTAL, // default
+      front: Container(
+        color: Colors.transparent,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Image.asset('graphics/puzzle_$counter.jpg'),
+            ],
+          ),
+        ),
+      ),
+      back: Center(
+        child: Container(
+          color: Colors.black87,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minWidth: _screenWidth(context),
+              maxWidth: _screenWidth(context),
+              minHeight: 300.0,
+              maxHeight: 300.0,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                AutoSizeText(
+                  _listAnswer[counter],
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 30.0,
+                      fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -155,63 +168,15 @@ class _MyHomePageState extends State<MyHomePage> {
 //        // the App.build method, and use it to set our appbar title.
 //        title: Text(widget.title),
 //      ),
-      body: new Dismissible(
-        resizeDuration: null,
-        onDismissed: (DismissDirection direction) {
-          setState(() {
-            debugPrint('direction: $direction');
-            _counter += direction == DismissDirection.endToStart ? 1 : -1;
-            debugPrint('_counter: $_counter');
-            Fluttertoast.showToast(
-                msg: "$_counter",
-                toastLength: Toast.LENGTH_SHORT,
-                gravity: ToastGravity.BOTTOM,
-                timeInSecForIos: 1,
-                backgroundColor: Colors.black.withOpacity(0.85),
-                textColor: Colors.white);
-          });
+      body: new PageView.builder(
+        physics: new AlwaysScrollableScrollPhysics(),
+        controller: _controller,
+        itemBuilder: (BuildContext context, int index) {
+          return _createPage(index % _listAnswer.length);
         },
-        key: new ValueKey(_counter),
-        child: FlipCard(
-          direction: FlipDirection.HORIZONTAL, // default
-          front: Container(
-            color: Colors.transparent,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  Image.asset('graphics/puzzle_$_counter.jpg'),
-                ],
-              ),
-            ),
-          ),
-          back: Center(
-            child: Container(
-              color: Colors.black87,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minWidth: _screenWidth(context),
-                  maxWidth: _screenWidth(context),
-                  minHeight: 300.0,
-                  maxHeight: 300.0,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    AutoSizeText(
-                      _listAnswer[_counter - 1],
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 30.0,
-                          fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
+        onPageChanged: (page) {
+          _showCardNumber(page + 1);
+        },
       ),
       floatingActionButton: new Row(
         children: <Widget>[
