@@ -53,7 +53,6 @@ class _MyHomePageState extends State<MyHomePage> {
   final _controller = new PageController();
   Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
   bool _toggle;
-  TextEditingController _answerController = new TextEditingController();
   var _listAnswer = [
     "one thing after another",
     "broken heart",
@@ -177,6 +176,7 @@ class _MyHomePageState extends State<MyHomePage> {
         onPageChanged: (page) {
           _showCardNumber(page + 1);
         },
+        itemCount: _listAnswer.length,
       ),
       floatingActionButton: new Row(
         children: <Widget>[
